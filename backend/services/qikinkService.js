@@ -1,21 +1,25 @@
 const axios = require('axios');
 
-const qikinkAPI = axios.create({
-    baseURL: process.env.QIKINK_API_URL || 'https://api.qikink.com/api/v2',
-    headers: {
-        'Authorization': `Bearer ${process.env.QIKINK_API_KEY}`,
-        'Content-Type': 'application/json'
-    }
-});
+// Helper to get fresh config
+const getAPIClient = () => {
+    return axios.create({
+        baseURL: process.env.QIKINK_API_URL || 'https://api.qikink.com/api/v2',
+        headers: {
+            'Authorization': `Bearer ${process.env.QIKINK_API_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    });
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // PRODUCT SYNC
 // ═══════════════════════════════════════════════════════════════════
 
 // Fetch products from Qikink
-exports.fetchQikinkProducts = async () => {
+const fetchQikinkProducts = async () => {
     try {
-        const response = await qikinkAPI.get('/products');
+        const api = getAPIClient();
+        const response = await api.get('/products');
         return response.data;
     } catch (error) {
         console.error('Qikink API Error:', error.response?.data || error.message);
@@ -23,10 +27,23 @@ exports.fetchQikinkProducts = async () => {
     }
 };
 
+// Helper to guess category from tags/name
+const getCategoryFromTags = (tags) => {
+    if (!tags) return 'Men';
+    const tagStr = Array.isArray(tags) ? tags.join(' ').toLowerCase() : tags.toLowerCase();
+
+    if (tagStr.includes('hoodie')) return 'Hoodies';
+    if (tagStr.includes('sweatshirt')) return 'Sweatshirts';
+    if (tagStr.includes('oversized')) return 'Oversized T-Shirts';
+    if (tagStr.includes('women')) return 'Women';
+    if (tagStr.includes('kid')) return 'Kids';
+    return 'Men'; // Default
+};
+
 // Sync Qikink products to your database
-exports.syncProducts = async () => {
+const syncProducts = async () => {
     try {
-        const qikinkProducts = await this.fetchQikinkProducts();
+        const qikinkProducts = await fetchQikinkProducts();
         const Product = require('../models/Product');
 
         // Handle both array/object response structures potentially returned by API
@@ -67,26 +84,14 @@ exports.syncProducts = async () => {
     }
 };
 
-// Helper to guess category from tags/name
-function getCategoryFromTags(tags) {
-    if (!tags) return 'Men';
-    const tagStr = Array.isArray(tags) ? tags.join(' ').toLowerCase() : tags.toLowerCase();
-
-    if (tagStr.includes('hoodie')) return 'Hoodies';
-    if (tagStr.includes('sweatshirt')) return 'Sweatshirts';
-    if (tagStr.includes('oversized')) return 'Oversized T-Shirts';
-    if (tagStr.includes('women')) return 'Women';
-    if (tagStr.includes('kid')) return 'Kids';
-    return 'Men'; // Default
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // ORDER FULFILLMENT
 // ═══════════════════════════════════════════════════════════════════
 
 // Create order on Qikink
-exports.createQikinkOrder = async (orderData) => {
+const createQikinkOrder = async (orderData) => {
     try {
+        const api = getAPIClient();
         const qikinkOrder = {
             order_id: orderData.orderNumber,
             customer: {
@@ -103,14 +108,14 @@ exports.createQikinkOrder = async (orderData) => {
             },
             items: orderData.products.map(item => ({
                 product_id: item.qikinkProductId,
-                variant_id: item.qikinkVariantId || null, // Might need logic to find correct variant
+                variant_id: item.qikinkVariantId || null,
                 quantity: item.quantity,
                 size: item.size,
                 color: item.color
             }))
         };
 
-        const response = await qikinkAPI.post('/orders', qikinkOrder);
+        const response = await api.post('/orders', qikinkOrder);
         return response.data;
     } catch (error) {
         console.error('Qikink order creation failed:', error.response?.data || error.message);
@@ -122,7 +127,7 @@ exports.createQikinkOrder = async (orderData) => {
 // WEBHOOK HANDLER
 // ═══════════════════════════════════════════════════════════════════
 
-exports.handleQikinkWebhook = async (webhookData) => {
+const handleQikinkWebhook = async (webhookData) => {
     try {
         const Order = require('../models/Order');
 
@@ -179,4 +184,11 @@ exports.handleQikinkWebhook = async (webhookData) => {
         console.error('Webhook handling failed:', error);
         throw error;
     }
+};
+
+module.exports = {
+    fetchQikinkProducts,
+    syncProducts,
+    createQikinkOrder,
+    handleQikinkWebhook
 };
