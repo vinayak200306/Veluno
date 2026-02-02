@@ -17,6 +17,41 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [orders, setOrders] = useState([]);
 
+    // Add Product State
+    const [showAddProduct, setShowAddProduct] = useState(false);
+    const [newProduct, setNewProduct] = useState({
+        name: '', description: '', price: '', category: 'Men',
+        image: '', sizes: 'S, M, L, XL', colors: 'Black, White', qikinkProductId: ''
+    });
+
+    const inputStyle = {
+        width: '100%', padding: '10px', background: '#0a0a0a',
+        border: `1px solid ${T.border}`, color: 'white', borderRadius: '4px', outline: 'none'
+    };
+
+    const handleCreateProduct = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await adminAPI.createProduct({
+                ...newProduct,
+                price: Number(newProduct.price),
+                images: [newProduct.image],
+                sizes: newProduct.sizes.split(',').map(s => s.trim()),
+                colors: newProduct.colors.split(',').map(c => c.trim()),
+                stock: 100 // Default stock
+            }, token);
+            alert('Product Created Successfully!');
+            setShowAddProduct(false);
+            setNewProduct({ name: '', description: '', price: '', category: 'Men', image: '', sizes: 'S, M, L, XL', colors: 'Black, White', qikinkProductId: '' });
+            fetchData(token);
+        } catch (err) {
+            alert('Failed to create product: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Login Handler
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -122,6 +157,15 @@ export default function AdminDashboard() {
 
                 {/* Quick Actions */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+                    {/* Create Product Card */}
+                    <div style={{ background: T.bgCard, padding: '24px', borderRadius: '8px', border: `1px solid ${T.border}` }}>
+                        <h3 style={{ margin: '0 0 16px', color: 'white' }}>Manage Products</h3>
+                        <p style={{ color: T.textDim, fontSize: '14px', marginBottom: '20px' }}>Manually add products and map to Qikink IDs.</p>
+                        <button onClick={() => setShowAddProduct(!showAddProduct)} style={{ background: T.border, color: 'white', border: 'none', padding: '10px 20px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            {showAddProduct ? 'Cancel' : '+ Add New Product'}
+                        </button>
+                    </div>
+
                     {/* Qikink Sync Card */}
                     <div style={{ background: T.bgCard, padding: '24px', borderRadius: '8px', border: `1px solid ${T.border}` }}>
                         <h3 style={{ margin: '0 0 16px', color: 'white' }}>Product Sync</h3>
@@ -149,6 +193,62 @@ export default function AdminDashboard() {
                         ) : <p style={{ color: T.textDim }}>Loading stats...</p>}
                     </div>
                 </div>
+
+                {/* Add Product Form */}
+                {showAddProduct && (
+                    <div style={{ background: T.bgCard, padding: '30px', borderRadius: '8px', border: `1px solid ${T.border}`, marginBottom: '40px' }}>
+                        <h3 style={{ color: T.gold, marginTop: 0, marginBottom: '20px' }}>Add New Product</h3>
+                        <form onSubmit={handleCreateProduct} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            {/* Left Col */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <div>
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>PRODUCT NAME</label>
+                                    <input required placeholder="e.g. Classic Black Hoodie" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} style={inputStyle} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>DESCRIPTION</label>
+                                    <textarea required rows="4" placeholder="Product details..." value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} style={inputStyle} />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>PRICE (₹)</label>
+                                        <input type="number" required placeholder="999" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} style={inputStyle} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>CATEGORY</label>
+                                        <select value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} style={inputStyle}>
+                                            <option>Men</option><option>Women</option><option>Kids</option><option>Accessories</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Col */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <div>
+                                    <label style={{ display: 'block', color: T.gold, marginBottom: '5px', fontSize: '12px', fontWeight: 'bold' }}>QIKINK PRODUCT ID (Result from Qikink Dashboard)</label>
+                                    <input placeholder="e.g. 5678 (Critical for Sync)" value={newProduct.qikinkProductId} onChange={e => setNewProduct({ ...newProduct, qikinkProductId: e.target.value })} style={{ ...inputStyle, borderColor: T.gold }} />
+                                    <p style={{ fontSize: '11px', color: T.textDim, marginTop: '4px' }}>Paste the ID from your Qikink dashboard here so orders sync automatically.</p>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>IMAGE URL</label>
+                                    <input required placeholder="https://..." value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} style={inputStyle} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>SIZES (Comma separated)</label>
+                                    <input placeholder="S, M, L, XL" value={newProduct.sizes} onChange={e => setNewProduct({ ...newProduct, sizes: e.target.value })} style={inputStyle} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>COLORS (Comma separated)</label>
+                                    <input placeholder="Black, White, Red" value={newProduct.colors} onChange={e => setNewProduct({ ...newProduct, colors: e.target.value })} style={inputStyle} />
+                                </div>
+                                <button type="submit" disabled={loading} style={{ marginTop: 'auto', background: T.gold, border: 'none', padding: '12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                    {loading ? 'SAVING...' : 'SAVE PRODUCT'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
 
                 {/* Orders Table */}
                 <h3 style={{ color: T.gold, marginBottom: '20px', letterSpacing: '1px' }}>RECENT ORDERS</h3>
