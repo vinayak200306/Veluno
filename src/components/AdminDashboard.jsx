@@ -30,37 +30,27 @@ export default function AdminDashboard() {
         border: `1px solid ${T.border}`, color: 'white', borderRadius: '4px', outline: 'none'
     };
 
-    const handleFileChange = async (e) => {
+    const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('image', file);
-        setUploading(true);
-
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                setNewProduct(prev => ({ ...prev, image: data.imageUrl }));
-                alert('Image Uploaded!');
-            } else {
-                console.error('Upload response:', data);
-                alert('Upload failed: ' + (data.message || data.error || 'Unknown server error'));
-            }
-        } catch (error) {
-            console.error('Upload Error:', error);
-            alert('Upload error: ' + error.message);
-        } finally {
-            setUploading(false);
+        // Check file size (limit to 2MB to be safe for MongoDB and performance)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File is too large. Please select an image under 2MB.');
+            return;
         }
+
+        setUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            setNewProduct(prev => ({ ...prev, image: reader.result }));
+            setUploading(false);
+        };
+        reader.onerror = () => {
+            alert('Failed to read file');
+            setUploading(false);
+        };
     };
 
     const handleCreateProduct = async (e) => {
@@ -270,10 +260,11 @@ export default function AdminDashboard() {
                                     {uploading && <p style={{ color: T.gold, fontSize: '12px', margin: '5px 0' }}>Uploading...</p>}
                                     <input
                                         required
-                                        placeholder="Image URL (Auto-filled on upload)"
+                                        placeholder="Image Preview (Auto-filled)"
                                         value={newProduct.image}
                                         onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
                                         style={{ ...inputStyle, marginTop: '8px', opacity: 0.7 }}
+                                        readOnly // Prefer file selection to avoid pasting huge strings
                                     />
                                 </div>
                                 <div>
