@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const qikinkService = require('../services/qikinkService');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protectAdmin } = require('../middleware/adminAuthMiddleware');
 
 // Sync products from Qikink (Admin only)
-router.post('/sync-products', protect, admin, async (req, res) => {
+router.post('/sync-products', protectAdmin, async (req, res) => {
     try {
         const result = await qikinkService.syncProducts();
         res.json(result);
