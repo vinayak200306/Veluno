@@ -71,7 +71,8 @@ export default function AdminDashboard() {
             setSyncStatus(`Success! Synced ${res.count} products.`);
             fetchData(token); // Refresh stats
         } catch (err) {
-            setSyncStatus('Sync failed. Check console.');
+            console.error("Sync Error:", err);
+            setSyncStatus(`Sync failed: ${err.message}`);
         }
     };
 
