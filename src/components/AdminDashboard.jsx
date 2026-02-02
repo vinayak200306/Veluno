@@ -52,11 +52,12 @@ export default function AdminDashboard() {
                 setNewProduct(prev => ({ ...prev, image: data.imageUrl }));
                 alert('Image Uploaded!');
             } else {
-                alert('Upload failed: ' + data.message);
+                console.error('Upload response:', data);
+                alert('Upload failed: ' + (data.message || data.error || 'Unknown server error'));
             }
         } catch (error) {
-            console.error(error);
-            alert('Upload error');
+            console.error('Upload Error:', error);
+            alert('Upload error: ' + error.message);
         } finally {
             setUploading(false);
         }
