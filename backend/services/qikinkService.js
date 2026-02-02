@@ -158,15 +158,11 @@ const createQikinkOrder = async (orderData) => {
             gateway: orderData.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
             total_order_value: orderData.totalAmount, // Assuming this is correct field
             line_items: orderData.products.map(item => ({
-                search_from_my_products: "0", // 0 means provide design details, 1 means use existing
-                // Since we don't know if products are synced, we might need to adjust this.
-                // For now, assuming we are using synced SKUs if available.
-                // If this fails, we need more info on "line_items" structure.
-                product_id: item.qikinkProductId,
-                variant_id: item.qikinkVariantId || null,
+                search_from_my_products: "1", // 1 = Use existing product from Qikink Account
+                sku: item.qikinkProductId,    // We store the Qikink SKU in this field
                 quantity: item.quantity,
                 size: item.size,
-                color: item.color
+                color: item.color // Ensure color is passed if needed
             })),
             shipping_address: [{
                 first_name: orderData.customerName.split(' ')[0],
