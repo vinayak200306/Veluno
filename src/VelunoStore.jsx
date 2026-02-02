@@ -195,12 +195,12 @@ function Navbar({ cartCount, onCartOpen, onSearchOpen }) {
 // ═══════════════════════════════════════════════════════════════════
 // SEARCH OVERLAY  (new)
 // ═══════════════════════════════════════════════════════════════════
-function SearchOverlay({ onClose, onViewProduct }) {
+function SearchOverlay({ onClose, onViewProduct, products = [] }) {
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
   const results = q.length > 1
-    ? PRODUCTS.filter(p => p.name.toLowerCase().includes(q.toLowerCase()) || p.category.toLowerCase().includes(q.toLowerCase()))
+    ? products.filter(p => p.name.toLowerCase().includes(q.toLowerCase()) || p.category.toLowerCase().includes(q.toLowerCase()))
     : [];
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.84)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", alignItems: "center", padding: "76px 20px 40px", animation: "fadeIn .2s ease" }} onClick={onClose}>
@@ -353,7 +353,7 @@ function OrderTracker({ onClose }) {
 // ═══════════════════════════════════════════════════════════════════
 // HERO  (upgraded: asymmetric layout + featured product image)
 // ═══════════════════════════════════════════════════════════════════
-function Hero({ onShopClick, onTrackClick }) {
+function Hero({ onShopClick, onTrackClick, featuredProduct }) {
   return (
     <div className="hero-layout" style={{ position: "relative", minHeight: "520px", background: "linear-gradient(160deg,#0a0a0a 0%,#141414 40%,#0d0d0d 100%)", display: "flex", alignItems: "center", overflow: "hidden" }}>
       {/* Noise grain overlay */}
@@ -384,16 +384,18 @@ function Hero({ onShopClick, onTrackClick }) {
       </div>
 
       {/* Right: featured product card (hidden on mobile via .hero-img) */}
-      <div className="hero-img" style={{ position: "relative", zIndex: 2, flex: "0 0 400px", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 48px 40px 0" }}>
-        <div style={{ position: "relative", width: "260px", height: "340px" }}>
-          <div style={{ position: "absolute", inset: "14px", background: "rgba(200,169,110,.04)", border: `1px solid ${T.borderHi}`, borderRadius: "6px" }} />
-          <img src={PRODUCTS[0].img} alt={PRODUCTS[0].name} style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "cover", borderRadius: "5px", border: `1px solid ${T.border}` }} />
-          <span style={{ position: "absolute", top: "14px", left: "14px", zIndex: 2, background: T.gold, color: "#111", fontSize: "9px", letterSpacing: "2px", padding: "4px 10px", fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif" }}>NEW DROP</span>
-          <div style={{ position: "absolute", bottom: "14px", right: "14px", zIndex: 2, background: "rgba(13,13,13,.88)", border: `1px solid ${T.border}`, borderRadius: "4px", padding: "7px 14px" }}>
-            <span style={{ color: T.gold, fontSize: "18px", fontFamily: "'Bebas Neue',sans-serif" }}>₹{PRODUCTS[0].price}</span>
+      {featuredProduct && (
+        <div className="hero-img" style={{ position: "relative", zIndex: 2, flex: "0 0 400px", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 48px 40px 0" }}>
+          <div style={{ position: "relative", width: "260px", height: "340px" }}>
+            <div style={{ position: "absolute", inset: "14px", background: "rgba(200,169,110,.04)", border: `1px solid ${T.borderHi}`, borderRadius: "6px" }} />
+            <img src={featuredProduct.img} alt={featuredProduct.name} style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "cover", borderRadius: "5px", border: `1px solid ${T.border}` }} />
+            <span style={{ position: "absolute", top: "14px", left: "14px", zIndex: 2, background: T.gold, color: "#111", fontSize: "9px", letterSpacing: "2px", padding: "4px 10px", fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif" }}>NEW DROP</span>
+            <div style={{ position: "absolute", bottom: "14px", right: "14px", zIndex: 2, background: "rgba(13,13,13,.88)", border: `1px solid ${T.border}`, borderRadius: "4px", padding: "7px 14px" }}>
+              <span style={{ color: T.gold, fontSize: "18px", fontFamily: "'Bebas Neue',sans-serif" }}>₹{featuredProduct.price}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -919,7 +921,7 @@ export default function VelunoStore() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Marquee text="NEW DROP IS LIVE!" speed={26} />
       <Navbar cartCount={cart.reduce((s, i) => s + i.qty, 0)} onCartOpen={() => setCartOpen(true)} onSearchOpen={() => setSearchOpen(true)} />
-      <Hero onShopClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })} onTrackClick={() => setTrackOpen(true)} />
+      <Hero onShopClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })} onTrackClick={() => setTrackOpen(true)} featuredProduct={products[0]} />
       <TrustBadges />
 
       {/* Products */}
@@ -952,7 +954,7 @@ export default function VelunoStore() {
       {/* Overlays */}
       {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={addToCart} />}
       {cartOpen && <CartDrawer cart={cart} onClose={() => setCartOpen(false)} onRemove={removeFromCart} onUpdateQty={updateCartQty} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
-      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} onViewProduct={viewProduct} />}
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} onViewProduct={viewProduct} products={products} />}
       {trackOpen && <OrderTracker onClose={() => setTrackOpen(false)} />}
       {checkoutOpen && (
         <CheckoutModal
