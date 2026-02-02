@@ -84,6 +84,14 @@ export const adminAPI = {
         return apiCall('/admin/products/stats', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+    },
+
+    createProduct: async (productData, token) => {
+        return apiCall('/products', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(productData)
+        });
     }
 };
 
