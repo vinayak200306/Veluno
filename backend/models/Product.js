@@ -66,6 +66,14 @@ const productSchema = new mongoose.Schema({
             message: 'Product must have between 1 and 10 images'
         }
     },
+    // Qikink Integration
+    qikinkProductId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true
+    },
+    qikinkVariantId: String,
     // Additional useful fields
     sku: {
         type: String,

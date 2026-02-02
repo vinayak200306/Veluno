@@ -56,6 +56,38 @@ export const productAPI = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
+// ADMIN API
+// ═══════════════════════════════════════════════════════════════════
+
+export const adminAPI = {
+    login: async (email, password) => {
+        return apiCall('/admin/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+    },
+
+    syncProducts: async (token) => {
+        return apiCall('/qikink/sync-products', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    },
+
+    getOrders: async (token) => {
+        return apiCall('/admin/orders', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    },
+
+    getStats: async (token) => {
+        return apiCall('/admin/products/stats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
 // ORDER APIs
 // ═══════════════════════════════════════════════════════════════════
 
