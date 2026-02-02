@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { productAPI, transformProduct } from './src/services/api';
-import CheckoutModal from './src/components/CheckoutModal';
+import { productAPI, transformProduct } from './services/api';
+import CheckoutModal from './components/CheckoutModal';
 
 
 // ─── THEME TOKENS ───────────────────────────────────────────────────
