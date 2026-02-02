@@ -19,6 +19,7 @@ export default function AdminDashboard() {
 
     // Add Product State
     const [showAddProduct, setShowAddProduct] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [newProduct, setNewProduct] = useState({
         name: '', description: '', price: '', category: 'Men',
         image: '', sizes: 'S, M, L, XL', colors: 'Black, White', qikinkProductId: ''
@@ -27,6 +28,38 @@ export default function AdminDashboard() {
     const inputStyle = {
         width: '100%', padding: '10px', background: '#0a0a0a',
         border: `1px solid ${T.border}`, color: 'white', borderRadius: '4px', outline: 'none'
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setUploading(true);
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setNewProduct(prev => ({ ...prev, image: data.imageUrl }));
+                alert('Image Uploaded!');
+            } else {
+                alert('Upload failed: ' + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Upload error');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleCreateProduct = async (e) => {
@@ -231,8 +264,16 @@ export default function AdminDashboard() {
                                     <p style={{ fontSize: '11px', color: T.textDim, marginTop: '4px' }}>Paste the ID from your Qikink dashboard here so orders sync automatically.</p>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>IMAGE URL</label>
-                                    <input required placeholder="https://..." value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} style={inputStyle} />
+                                    <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>PRODUCT IMAGE</label>
+                                    <input type="file" onChange={handleFileChange} style={{ ...inputStyle, padding: '8px' }} accept="image/*" />
+                                    {uploading && <p style={{ color: T.gold, fontSize: '12px', margin: '5px 0' }}>Uploading...</p>}
+                                    <input
+                                        required
+                                        placeholder="Image URL (Auto-filled on upload)"
+                                        value={newProduct.image}
+                                        onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
+                                        style={{ ...inputStyle, marginTop: '8px', opacity: 0.7 }}
+                                    />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', color: T.textDim, marginBottom: '5px', fontSize: '12px' }}>SIZES (Comma separated)</label>

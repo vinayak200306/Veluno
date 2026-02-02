@@ -59,6 +59,7 @@ app.use('/api/orders', orderLimiter, require('./routes/orderRoutes')); // Order 
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/payment', paymentLimiter, require('./routes/paymentRoutes')); // Payment rate limiting
 app.use('/api/qikink', require('./routes/qikinkRoutes')); // Qikink Integration
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Qikink Automated Sync (Daily at 2:00 AM)
 const cron = require('node-cron');
