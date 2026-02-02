@@ -22,8 +22,11 @@ const fetchQikinkProducts = async () => {
         const response = await api.get('/products');
         return response.data;
     } catch (error) {
+        const requestedUrl = error.config?.url || 'unknown URL';
+        const baseURL = error.config?.baseURL || '';
+        const fullUrl = baseURL + requestedUrl;
         console.error('Qikink API Error:', error.response?.data || error.message);
-        throw error;
+        throw new Error(`API Error (${error.response?.status || 'Net'}): ${fullUrl}`);
     }
 };
 
